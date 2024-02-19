@@ -1,8 +1,8 @@
-## Add / Register a postgresql connector:
+## Add / Register a postgresql Source Connector:
 ### Run
 curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d \
 '{
- "name": "pg-DB-connector",
+ "name": "pg-source-connector",
  "config": {
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
     "tasks.max": "1",
@@ -12,12 +12,66 @@ curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" loc
     "database.password": "your_password",
     "database.dbname" : "your_db",
     "database.whitelist": "your_db",
+    "table.include.list": "public.core_brand,public.core_cooler,public.core_coolermanufacturer,
+                          public.core_coolermodel,public.core_distributor,public.core_district,
+                          public.core_outlet,public.core_technician",
     "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
     "schema.history.internal.kafka.topic": "schema-changes.bdi_dev",
     "plugin.name": "pgoutput",
     "topic.prefix": "ndw_"
  }
 }'
+
+
+## Add / Register a postgresql Sink Connector:
+curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d \
+'{
+  "name": "pg-sink-connector",
+  "config": {
+    "heartbeat.interval.ms": "3000",                                                            
+    "autoReconnect":"true",
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": "3",
+    "connection.url": "jdbc:postgresql://remote_host:5432/database_name",
+    "connection.user": "user",
+    "connection.password": "password",
+    #"topics": "my_topic",
+    "auto.create": "true",
+    "auto.evolve": "true",
+    "insert.mode": "upsert",
+    "delete.enabled": "true",
+    "topics":"ndw_.public.core_brand,ndw_.public.core_cooler,ndw_.public.core_coolermanufacturer,
+              ndw_.public.core_coolermodel,ndw_.public.core_distributor,ndw_.public.core_district,
+              ndw_.public.core_outlet,ndw_.public.core_technician"
+  }
+}''
+
+
+<!-- {
+"name": "mysql-sink-connector",  
+"config": {
+    "heartbeat.interval.ms": "3000",                                                            
+    "autoReconnect":"true",
+    "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",  
+    "tasks.max": "3",  
+    "connection.url":"jdbc:mysql://10.10.10.10:3306/mydatabase_sink",   # specify sink DB
+    "connection.username": "root",  
+    "connection.password": "*********",  
+    "insert.mode": "upsert",  
+    "delete.enabled": "true",  
+    "primary.key.mode": "record_key",  
+    "schema.evolution": "basic",  
+    "database.time_zone": "UTC",
+    "auto.evolve": "true",
+    "quote.identifiers":"true",
+    "auto.create":"true",                                 # auto create tables
+    "value.converter.schemas.enable":"true",              # auto reflect schema changes
+    "value.converter":"org.apache.kafka.connect.json.JsonConverter",
+    "table.name.format": "${topic}",
+    "topics.regex":"exampleserver_source.mydatabase_source.*",  # topics regexp to replicate
+    "pk.mode" :"kafka"
+  }
+} -->
 
 
 ## View connectors
@@ -44,6 +98,7 @@ curl -i -X PUT -H "Accept:application/json" -H "Content-Type:application/json" l
 # MONITORING
 To check if Debezium (which captures database changes and publishes them to Kafka) has successfully read your database, you can use Kafka tools to inspect the topics where Debezium publishes the change events. Debezium typically publishes change events to Kafka topics, and you can monitor these topics to see if any data is being produced.
 
+
 ## 1. List Kafka Topics 
 If Not Dockerized:
     kafka-topics.sh --list --bootstrap-server localhost:9092
@@ -52,6 +107,7 @@ If Dockerized:
 
     In the container terminal, run:
         kafka-topics.sh --list --bootstrap-server 127.0.0.1:9092
+
 
 ## 2. Inspect Debezium Topics
 If Not Dockerized:
