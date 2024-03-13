@@ -11,6 +11,7 @@ Assumes a base environment such as:
 
 <br />
 
+
 To start the docker instances:
 #### **Run** (from within the same directory as the **docker-compose.yml** file)
 <pre>
@@ -151,7 +152,7 @@ curl -i -X PUT -H "Accept:application/json" -H "Content-Type:application/json" l
 <br />
 
 # Monitoring
-To check if Debezium (which captures database changes and publishes them to Kafka) has successfully read your database, you can use Kafka tools to inspect the topics where Debezium publishes the change events. Debezium typically publishes change events to Kafka topics, and you can monitor these topics to see if any data is coming in.
+To check if Debezium (which captures database changes and publishes them to Kafka) has successfully read data from your **source** database, you can use Kafka tools to inspect the topics where Debezium publishes the change events. Debezium typically publishes change events to Kafka topics, and you can monitor these topics to see if any data is coming in.
 <br />
 <br />
 
@@ -186,7 +187,7 @@ If Dockerized:
 <br />
 
 ## 3. Check for Data: 
-If Debezium is successfully reading your database and publishing change events to Kafka, you should see data being printed to the console when you consume messages from the relevant topics. If you don't see any data, there may be an issue with your Debezium configuration or connectivity to the database.
+If Debezium is successfully reading from your database and publishing change events to Kafka, you should see data being printed to the console when you consume messages from the relevant topics. If you don't see any data, there may be an issue with your Debezium configuration or connectivity to the database.
 <br />
 <br />
 
