@@ -1,5 +1,5 @@
 # Setup
-### Assumes a base environment such as:
+Assumes a base environment such as:
 
 **Linux / Ubuntu 22.04** running on your machine
 
@@ -7,7 +7,7 @@
 
 **Sink PostgreSQL DataBase** # To stream data into
 
-**Docker / Docker Compose** # Starts up 3 instances for **Kafka**, **Kafka-Connect** and **Zookeeper**
+**Docker / Docker Compose** # To manage 3 instances for **Kafka**, **Kafka-Connect** and **Zookeeper**
 
 <br />
 
