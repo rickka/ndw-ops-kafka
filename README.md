@@ -1,5 +1,29 @@
-## Add / Register a postgresql Source Connector:
-### Run
+# Setup
+### Assumes a base environment such as:
+
+**Linux / Ubuntu 22.04** running on your machine
+
+**Source PostgreSQL Database** # To pull data from
+
+**Sink PostgreSQL DataBase** # To stream data into
+
+**Docker / Docker Compose** # Starts up 3 instances for **Kafka**, **Kafka-Connect** and **Zookeeper**
+
+<br />
+
+To start the docker instances:
+#### **Run** (from within the same directory as the **docker-compose.yml** file)
+<pre>
+docker compose up 
+</pre>
+Initial run should take afew minutes, because the docker images need to be downloaded.
+<br />
+<br />
+
+# Initialization
+## To add / register a postgresql Source Connector:
+#### **Run**
+<pre>
 curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d \
 '{
  "name": "pg-source-connector",
@@ -12,19 +36,21 @@ curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" loc
     "database.password": "your_password",
     "database.dbname" : "your_db",
     "database.whitelist": "your_db",
-    "table.include.list": "public.core_brand,public.core_cooler,public.core_coolermanufacturer,
-                          public.core_coolermodel,public.core_distributor,public.core_district,
-                          public.core_outlet,public.core_technician",
+    "table.include.list": "public.table_1,public.table_2,public.table_3, public.table_4"
     "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
     "schema.history.internal.kafka.topic": "schema-changes.bdi_dev",
     "plugin.name": "pgoutput",
     "topic.prefix": "ndw_"
  }
 }'
+</pre>
+<br />
+<br />
 
-
-## Add / Register a postgresql Sink Connector:
-curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/ -d \
+## To add / register a postgresql Sink Connector:
+#### **Run**
+<pre>
+curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d \
 '{
   "name": "pg-sink-connector",
   "config": {
@@ -32,22 +58,24 @@ curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" loc
     "autoReconnect":"true",
     "connector.class": "io.debezium.connector.jdbc.JdbcSinkConnector",
     "tasks.max": "3",
-    "connection.url": "jdbc:postgresql://127.0.0.1:5433/staging_bdi",
-    "connection.username": "postgres",
-    "connection.password": "creation",
+    "connection.url": "jdbc:postgresql://127.0.0.1:5433/your_staging_or_sink_db",
+    "connection.username": "staging_db_username",
+    "connection.password": "staging_db_password",
     "auto.create": "true",
     "auto.evolve": "true",
     "insert.mode": "upsert",
     "primary.key.mode": "record_key",
     "primary.key.fields": "id",
     "delete.enabled": "true",
-    "table.include.list": "public.core_brand,public.core_cooler,public.core_coolermanufacturer,public.core_coolermodel,public.core_distributor,public.core_district,public.core_outlet,public.core_technician",
-    "topics":"public.core_brand,public.core_cooler,public.core_coolermanufacturer,public.core_coolermodel,public.core_distributor,public.core_district,public.core_outlet,public.core_technician"
+    "table.include.list": "public.table_1,public.table_2,public.table_3,public.table_4",
+    "topics":"ndw_.public.table_1,ndw_.public.table_2,ndw_.public.table_3,ndw_.public.table_4"
   }
 }'
-
-#"topics": "my_topic",
-<!-- {
+</pre>
+<br />
+<br />
+<!--
+#"topics": "my_topic", {
 "name": "mysql-sink-connector",  
 "config": {
     "heartbeat.interval.ms": "3000",                                                            
@@ -74,52 +102,100 @@ curl -X POST -H "Accept:application/json" -H "Content-Type:application/json" loc
 } -->
 
 
-## View connectors
-### Run
-curl -i -X GET localhost:8083/connectors/
+## To view the connectors you have registered.
+#### **Run**
+<pre>
+curl -i -X GET http://localhost:8083/connectors/
+</pre>
+<br />
+<br />
 
-
-## Check connectors
-### Run
+## To check the status of a connector
+#### **Run**
+<pre>
 curl -s http://localhost:8083/connectors/pg-DB-connector/status
-#This should return a JSON response with the connector status.
+</pre>
+#### # this should return a JSON response with the connector status.
+<br />
+<br />
 
-
-## Remove connector
-### Run
-curl -i -X DELETE localhost:8083/connectors/<connector-name>/
+## To Remove a connector
+#### **Run**
+<pre>
+curl -i -X DELETE localhost:8083/connectors/your_connector_name/
+</pre>
 i.e curl -i -X DELETE localhost:8083/connectors/pg-DB-connector/
+<br />
+<br />
 
+## To Modify a connector
+#### **Run**
+<pre>
+curl -i -X PUT -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/inventory-connector/config -d 
+  '{ "connector.class": "io.debezium.connector.mysql.MySqlConnector", 
+      "tasks.max": "1", 
+      "database.hostname": "mysql", 
+      "database.port": "3306", 
+      "database.user": "debezium", 
+      "database.password": "dbz", 
+      "database.server.id": "184054", 
+      "database.server.name": "dbserver1", 
+      "database.include.list": "inventory", 
+      "database.history.kafka.bootstrap.servers": 
+      "kafka:9092", 
+      "database.history.kafka.topic": "dbhistory.inventory"
+  }'
+</pre>
+<br />
+<br />
+<br />
 
-## To Modify connector
-curl -i -X PUT -H "Accept:application/json" -H "Content-Type:application/json" localhost:8083/connectors/inventory-connector/config -d '{ "connector.class": "io.debezium.connector.mysql.MySqlConnector", "tasks.max": "1", "database.hostname": "mysql", "database.port": "3306", "database.user": "debezium", "database.password": "dbz", "database.server.id": "184054", "database.server.name": "dbserver1", "database.include.list": "inventory", "database.history.kafka.bootstrap.servers": "kafka:9092", "database.history.kafka.topic": "dbhistory.inventory" }'
-
-
-# MONITORING
-To check if Debezium (which captures database changes and publishes them to Kafka) has successfully read your database, you can use Kafka tools to inspect the topics where Debezium publishes the change events. Debezium typically publishes change events to Kafka topics, and you can monitor these topics to see if any data is being produced.
-
+# Monitoring
+To check if Debezium (which captures database changes and publishes them to Kafka) has successfully read your database, you can use Kafka tools to inspect the topics where Debezium publishes the change events. Debezium typically publishes change events to Kafka topics, and you can monitor these topics to see if any data is coming in.
+<br />
+<br />
 
 ## 1. List Kafka Topics 
 If Not Dockerized:
-    kafka-topics.sh --list --bootstrap-server localhost:9092
-If Dockerized:
-    docker exec -it <kafka_container_id> /bin/bash #To get into the container terminal
+  <pre>
+  kafka-topics.sh --list --bootstrap-server localhost:9092
+  </pre>
+If Dockerized, first connect to the container bash terminal:
+  <pre>
+  docker exec -it <kafka_container_id> /bin/bash
+  </pre>
+  then **run**:
+  <pre>
+  kafka-topics.sh --list --bootstrap-server 127.0.0.1:9092
+  </pre>
 
-    In the container terminal, run:
-        kafka-topics.sh --list --bootstrap-server 127.0.0.1:9092
 
+<br />
+<br />
 
 ## 2. Inspect Debezium Topics
 If Not Dockerized:
-    kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic my_database.my_table --from-beginning
-if Dockerized:
-    docker exec -it <kafka_container_id> kafka-console-consumer.sh --bootstrap-server <kafka_container_name>:9092 --topic my_database.my_table --from-beginning
+  <pre>
+  kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic your_database.your_table --from-beginning
+  </pre>
+If Dockerized:
+  <pre>
+  docker exec -it your_kafka_container_id kafka-console-consumer.sh --bootstrap-server your_kafka_container_name:9092 --topic your_topic.your_table --from-beginning
+  </pre>
+<br />
+<br />
 
-## 3.Check for Data: If Debezium is successfully reading your database and publishing change events to Kafka, you should see data being printed to the console when you consume messages from the relevant topics. If you don't see any data, there may be an issue with your Debezium configuration or connectivity to the database.
+## 3. Check for Data: 
+If Debezium is successfully reading your database and publishing change events to Kafka, you should see data being printed to the console when you consume messages from the relevant topics. If you don't see any data, there may be an issue with your Debezium configuration or connectivity to the database.
+<br />
+<br />
 
 
-
-View Data in Topics:
+### **View Data in Topics:**
 
 Once you know the topics you want to consume from, you can use the kafka-console-consumer.sh script to view the data. For example, to consume messages from a topic named my_topic, you can use the following command:
-docker exec -it <kafka_container_id> kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic ndw_.public.core_brand --from-beginning
+
+If Dockerized:
+<pre>
+docker exec -it your_kafka_container_id kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic your_topic.your_table --from-beginning
+</pre>
